@@ -14,22 +14,38 @@ public class MySQLService {
     private static final String username = "root";
     private static final String password = "LeraMam";
     private static List<String>  searchParams = new ArrayList<>();;
-    public static void selectNotes(JTable table) {
+    public static void selectNotes(JTable table, String lastName, String faculty) {
         String sql = "SELECT * FROM students";
+        // Добавление условий выборки по фамилии и по факультету, если они указаны
+        if (lastName != null) {
+            sql += " WHERE last_name = ?";
+        }
+        if (faculty != null) {
+            if (lastName != null) {
+                sql += " AND";
+            } else {
+                sql += " WHERE";
+            }
+            sql += " faculty = ?";
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, username, password);
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-            // Создание TableModel для хранения данных из результатов запроса
+            PreparedStatement statement = connection.prepareStatement(sql);
+            // Установка значений параметров выборки
+            if (lastName != null) {
+                statement.setString(1, lastName);
+            }
+            if (faculty != null) {
+                statement.setString(lastName != null ? 2 : 1, faculty);
+            }
+            ResultSet resultSet = statement.executeQuery();
             DefaultTableModel tableModel = new DefaultTableModel();
-            // Получение метаданных для определения количества столбцов
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
-            // Добавление заголовков столбцов в TableModel
             for (int i = 1; i <= columnCount; i++) {
                 tableModel.addColumn(metaData.getColumnName(i));
             }
-            // Добавление данных из результатов запроса в TableModel
             while (resultSet.next()) {
                 Object[] rowData = new Object[columnCount];
                 for (int i = 1; i <= columnCount; i++) {
@@ -37,7 +53,6 @@ public class MySQLService {
                 }
                 tableModel.addRow(rowData);
             }
-            // Привязка TableModel к таблице
             table.setModel(tableModel);
             resultSet.close();
             statement.close();
@@ -46,6 +61,8 @@ public class MySQLService {
             e.printStackTrace();
         }
     }
+
+
     public static void addNote(List<String> params) {
         String sql = "INSERT students(last_name, first_name, " +
                 "middle_name, gender, phone, address, birth_date, education_place, faculty) " +

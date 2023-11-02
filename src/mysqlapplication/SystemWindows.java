@@ -20,10 +20,10 @@ import static mysqlapplication.MySQLService.selectNotes;
 public class SystemWindows extends JFrame implements ActionListener {
     private JTextField textFieldLastName, textFieldFirstName, textFieldMiddleName;
     private JTextField textFieldPhone, textFieldAddress;
-    private JTextField textFieldBirthDate, textFieldEducationPlace;
+    private JTextField textFieldBirthDate, textFieldEducationPlace, textFieldSearch;
     private JComboBox<String> choiceFaculty;
     private JRadioButton radioButtonMale, radioButtonFemale;
-    private JButton buttonSubmit, buttonDelete;
+    private JButton buttonSubmit, buttonDelete, buttonSearch;
     private java.util.List<String> searchParams;
     private java.util.List<String> addParams;
     private java.util.List<String> deleteParams;
@@ -167,6 +167,31 @@ public class SystemWindows extends JFrame implements ActionListener {
             }
         });
     }
+    public void searchForm(boolean isName) {
+        setTitle("Форма для поиска");
+        setLayout(null);
+        textFieldSearch = new JTextField();
+        JLabel labelSearch = new JLabel("Ключевое слово:");
+        labelSearch.setBounds(50, 50, 110, 25);
+        textFieldSearch.setBounds(170, 50, 100, 25);
+        add(labelSearch);
+        add(textFieldSearch);
+
+        buttonSearch = new JButton("Найти");
+        buttonSearch.setBounds(100, 100, 100, 30);
+        add(buttonSearch);
+        if(isName) buttonSearch.addActionListener(searchName);
+        else buttonSearch.addActionListener(searchFaculty);
+        setSize(300, 200);
+        Color backgroundColor = new Color(253, 188, 180);
+        getContentPane().setBackground(backgroundColor);
+        setVisible(true);
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                dispose();
+            }
+        });
+    }
     public void ErrorWindow() {
         setTitle("Ошибка");
         setLayout(null);
@@ -191,20 +216,18 @@ public class SystemWindows extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
-    public void displayStudentData() {
+    public void displayStudentData(String lastName, String faculty) {
         setTitle("Данные студентов");
         setLayout(new BorderLayout());
-        JTable table = new JTable();
+        table = new JTable();
         JScrollPane scrollPane = new JScrollPane(table);
-
         // Вызов функции выборки данных из базы данных и привязка результатов к таблице
-        selectNotes(table);
+
+        selectNotes(table, lastName, faculty);
 
         add(scrollPane, BorderLayout.CENTER);
-
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
         // Установка цвета фона окна
         Color backgroundColor = new Color(253, 188, 180);
         getContentPane().setBackground(backgroundColor);
@@ -291,6 +314,28 @@ public class SystemWindows extends JFrame implements ActionListener {
                 addParams.add(textFieldEducationPlace.getText());
                 addParams.add((String) choiceFaculty.getSelectedItem());
                 MySQLService.changeNote(addParams);
+            }catch (Exception ex) {
+                System.out.println("Error: " + ex.toString());
+            }
+        }
+    };
+    ActionListener searchName = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent arg0) {
+            try{
+                String param = textFieldSearch.getText();
+                displayStudentData(param, null);
+            }catch (Exception ex) {
+                System.out.println("Error: " + ex.toString());
+            }
+        }
+    };
+    ActionListener searchFaculty = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent arg0) {
+            try{
+                String param = textFieldSearch.getText();
+                displayStudentData(null, param);
             }catch (Exception ex) {
                 System.out.println("Error: " + ex.toString());
             }
